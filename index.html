@@ -1,1 +1,148 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Daily Random Pro</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:18px;background:#f3f5f9;color:#20283a;font-family:Arial,sans-serif}
+.app{max-width:600px;margin:auto}
+h1{text-align:center;color:#365bd8}
+.card{background:white;padding:17px;border-radius:16px;margin:14px 0;box-shadow:0 3px 12px #0000000b}
+label{display:block;font-weight:bold;margin:10px 0 6px}
+input{width:100%;padding:12px;border:1px solid #ccd3e0;border-radius:9px;font-size:17px}
+.range{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+button{border:0;border-radius:10px;padding:13px 16px;font-size:16px;font-weight:bold;cursor:pointer}
+.primary{background:#4169e1;color:white;width:100%;margin-top:14px}
+.secondary{background:#e9edfa;color:#304b9e}
+.result{text-align:center;font-size:65px;font-weight:bold;color:#4169e1;padding:15px}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:#f1f4ff;padding:13px;border-radius:10px}
+.stat b{display:block;font-size:22px;margin-top:6px}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{padding:10px 5px;border-bottom:1px solid #e5e8ef;text-align:center}
+th{background:#f1f4ff}
+.tablewrap{overflow-x:auto}
+.small{font-size:13px;color:#687187}
+</style>
+</head>
+<body>
+<div class="app">
+<h1>🎲 Daily Random Pro</h1>
 
+<div class="card">
+<h3>⚙️ Cài đặt khoảng số</h3>
+<div class="range">
+<div><label>Số nhỏ nhất</label><input id="min" type="number" value="30"></div>
+<div><label>Số lớn nhất</label><input id="max" type="number" value="100"></div>
+</div>
+<p class="small">Mỗi ngày chỉ nhận một kết quả. Có thể quay thủ công hoặc tự động khi mở ứng dụng.</p>
+<button class="primary" onclick="draw()">🎲 QUAY NGAY</button>
+</div>
+
+<div class="card">
+<h3 style="text-align:center">Kết quả hôm nay</h3>
+<div class="result" id="result">--</div>
+<p id="status" class="small" style="text-align:center">Chưa có kết quả</p>
+</div>
+
+<div class="card">
+<h3>📊 Thống kê</h3>
+<div class="stats">
+<div class="stat">Tổng tích lũy<b id="sum">0</b></div>
+<div class="stat">Số ngày<b id="days">0</b></div>
+<div class="stat">Trung bình<b id="avg">0</b></div>
+<div class="stat">Cao nhất / thấp nhất<b id="extreme">-- / --</b></div>
+</div>
+</div>
+
+<div class="card">
+<h3>📅 Lịch sử kết quả</h3>
+<div class="tablewrap">
+<table>
+<thead><tr><th>Ngày</th><th>Kết quả</th><th>Tổng cộng</th></tr></thead>
+<tbody id="history"></tbody>
+</table>
+</div>
+<button class="secondary" style="width:100%;margin-top:14px" onclick="exportCSV()">⬇️ Xuất file CSV</button>
+</div>
+<p class="small" style="text-align:center">Daily Random Pro • Dữ liệu lưu trên thiết bị này</p>
+</div>
+
+<script>
+const KEY="dailyRandomPro_v1";
+let records=JSON.parse(localStorage.getItem(KEY)||"[]");
+
+function today(){
+  const d=new Date();
+  return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+}
+function save(){
+  localStorage.setItem(KEY,JSON.stringify(records));
+}
+function draw(){
+  if(records.some(x=>x.date===today())){
+    alert("Hôm nay đã có kết quả rồi. Mỗi ngày chỉ được quay một lần!");
+    render();
+    return;
+  }
+  const min=Number(document.getElementById("min").value);
+  const max=Number(document.getElementById("max").value);
+  if(!Number.isInteger(min)||!Number.isInteger(max)||min>max){
+    alert("Vui lòng nhập khoảng số hợp lệ!");
+    return;
+  }
+  const value=Math.floor(Math.random()*(max-min+1))+min;
+  records.push({date:today(),value});
+  records.sort((a,b)=>a.date.localeCompare(b.date));
+  save();
+  render();
+}
+function render(){
+  const item=records.find(x=>x.date===today());
+  document.getElementById("result").textContent=item?item.value:"--";
+  document.getElementById("status").textContent=item?
+    "Đã hoàn thành lượt quay hôm nay":"Chưa có kết quả hôm nay";
+
+  let total=0;
+  const body=document.getElementById("history");
+  body.innerHTML="";
+  records.forEach(x=>{
+    total+=x.value;
+    const tr=document.createElement("tr");
+    [x.date,x.value,total].forEach(v=>{
+      const td=document.createElement("td");
+      td.textContent=v;
+      tr.appendChild(td);
+    });
+    body.appendChild(tr);
+  });
+  const values=records.map(x=>x.value);
+  document.getElementById("sum").textContent=total;
+  document.getElementById("days").textContent=values.length;
+  document.getElementById("avg").textContent=
+    values.length?(total/values.length).toFixed(2):0;
+  document.getElementById("extreme").textContent=values.length?
+    Math.max(...values)+" / "+Math.min(...values):"-- / --";
+}
+function exportCSV(){
+  let total=0;
+  let csv="Ngay,Ket qua,Tong tich luy\n";
+  records.forEach(x=>{
+    total+=x.value;
+    csv+=x.date+","+x.value+","+total+"\n";
+  });
+  const blob=new Blob(["\uFEFF"+csv],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="daily-random-history.csv";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+if(!records.some(x=>x.date===today())) draw();
+else render();
+</script>
+</body>
+</html>
