@@ -141,8 +141,14 @@ function exportCSV(){
   a.click();
   URL.revokeObjectURL(url);
 }
-if(!records.some(x=>x.date===today())) draw();
-else render();
+render();
+
+setTimeout(() => {
+
+  if (!records.some(x => x.date === today())) {
+    draw();
+  }
+}, 30000);  
 </script>
 </body>
 </html>
