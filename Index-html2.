@@ -3,59 +3,71 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Daily Random Pro</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *{box-sizing:border-box}
-body{margin:0;padding:20px;font-family:Arial,sans-serif;background:linear-gradient(135deg,#172554,#312e81);color:white;min-height:100vh}
+body{margin:0;padding:18px;font-family:Arial;background:linear-gradient(135deg,#172554,#4338ca);color:white;min-height:100vh}
 .container{max-width:500px;margin:auto}
 h1{text-align:center}
-.sub{text-align:center;color:#c7d2fe;margin-bottom:24px}
-.card{background:white;color:#1e293b;padding:20px;border-radius:18px;margin-bottom:16px}
-.result{text-align:center;font-size:64px;font-weight:bold;color:#4f46e5;padding:20px}
-button{border:0;border-radius:12px;padding:14px;font-size:16px;font-weight:bold;cursor:pointer}
-.primary{background:#4f46e5;color:white;width:100%}
-.secondary{background:#e0e7ff;color:#3730a3;width:100%;margin-top:10px}
+.subtitle{text-align:center;color:#c7d2fe;margin-bottom:22px}
+.card{background:white;color:#1e293b;padding:18px;border-radius:16px;margin-bottom:15px}
+input{width:100%;padding:13px;margin:7px 0 13px;border:1px solid #cbd5e1;border-radius:9px;font-size:16px}
+label{font-weight:bold}
+button{width:100%;padding:13px;border:0;border-radius:10px;font-size:16px;font-weight:bold;margin-top:8px;background:#4f46e5;color:white}
+button.secondary{background:#e0e7ff;color:#3730a3}
 button:disabled{opacity:.5}
-.inputs{display:flex;gap:12px}
-.inputs div{flex:1}
-label{display:block;font-weight:bold;margin-bottom:7px}
-input{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;font-size:16px}
+.result{text-align:center;font-size:65px;font-weight:bold;color:#4f46e5;padding:20px}
+.inputs{display:flex;gap:10px}
+.inputs div{flex:1;min-width:0}
 .stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.stat{background:#eef2ff;padding:14px;border-radius:12px;text-align:center}
+.stat{background:#eef2ff;padding:13px;border-radius:10px;text-align:center}
 .stat strong{display:block;font-size:23px;color:#4338ca;margin-top:5px}
-.status{text-align:center;color:#64748b;font-size:14px;margin-top:12px}
-table{width:100%;border-collapse:collapse;font-size:14px}
-th,td{padding:10px 5px;text-align:center;border-bottom:1px solid #e2e8f0}
-th{color:#64748b}
+.status{text-align:center;color:#64748b;font-size:13px;margin-top:12px}
 .history{max-height:260px;overflow:auto}
-.empty{text-align:center;color:#64748b;padding:18px}
-.footer{text-align:center;color:#c7d2fe;font-size:12px;margin-top:20px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td,th{padding:10px 4px;text-align:center;border-bottom:1px solid #ddd}
+.message{font-size:14px;color:#475569;line-height:1.5;overflow-wrap:anywhere}
+.hidden{display:none}
+.footer{text-align:center;font-size:12px;color:#c7d2fe;margin:20px}
 </style>
 </head>
 <body>
 <div class="container">
 <h1>🎲 Daily Random Pro</h1>
-<div class="sub">Mỗi ngày một con số ngẫu nhiên</div>
+<div class="subtitle">Mỗi ngày một con số ngẫu nhiên</div>
+
+<div class="card" id="authCard">
+<h3>🔐 Tài khoản</h3>
+<label>Email</label>
+<input id="email" type="email" placeholder="Nhập email">
+<label>Mật khẩu</label>
+<input id="password" type="password" placeholder="Nhập mật khẩu">
+<button onclick="signup()">Đăng ký</button>
+<button class="secondary" onclick="login()">Đăng nhập</button>
+<p class="message" id="authMessage"></p>
+</div>
+
+<div id="app" class="hidden">
+<div class="card">
+<div class="message">Tài khoản: <strong id="userEmail"></strong></div>
+<button class="secondary" onclick="logout()">Đăng xuất</button>
+</div>
 
 <div class="card">
+<h3>⚙️ Giới hạn quay</h3>
 <div class="inputs">
-<div>
-<label for="min">Giới hạn dưới</label>
-<input id="min" type="number" value="30">
-</div>
-<div>
-<label for="max">Giới hạn trên</label>
-<input id="max" type="number" value="100">
-</div>
+<div><label>Giới hạn dưới</label><input id="min" type="number" value="30"></div>
+<div><label>Giới hạn trên</label><input id="max" type="number" value="100"></div>
 </div>
 <button class="secondary" onclick="saveLimits()">Lưu giới hạn</button>
 </div>
 
 <div class="card">
-<div style="text-align:center;font-weight:bold">KẾT QUẢ HÔM NAY</div>
+<h3 style="text-align:center">KẾT QUẢ HÔM NAY</h3>
 <div class="result" id="result">?</div>
-<button class="primary" id="drawBtn" onclick="draw('manual')">🎯 QUAY NGAY</button>
+<button id="drawBtn" onclick="draw('manual')">🎯 QUAY NGAY</button>
 <div class="status" id="status">Tự động quay sau 5 phút nếu chưa quay.</div>
 </div>
 
@@ -72,129 +84,247 @@ th{color:#64748b}
 <div class="card">
 <h3>📅 Lịch sử quay</h3>
 <div class="history" id="history"></div>
-<button class="secondary" onclick="exportCSV()">⬇️ Xuất file CSV</button>
+<button class="secondary" onclick="exportCSV()">⬇️ Xuất CSV</button>
 </div>
-<div class="footer">Dữ liệu được lưu trên trình duyệt.</div>
+</div>
+
+<div class="footer">Daily Random Pro © 2026</div>
 </div>
 
 <script>
-const STORAGE_KEY="dailyRandomPro_v1";
+const SUPABASE_URL="https://uclfntxylbopdiuoszgf.supabase.co";
+const SUPABASE_KEY="sb_publishable_s2i7rQQH57bx1JaauGX8iQ_n-X__uyj";
+
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+
+let user=null;
 let records=[];
 let limits={min:30,max:100};
+let timer=null;
+let busy=false;
 
 function today(){
-const d=new Date();
-return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+ const d=new Date();
+ return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
 }
 
-function loadData(){
-try{
-const saved=JSON.parse(localStorage.getItem(STORAGE_KEY));
-if(saved){
-records=Array.isArray(saved.records)?saved.records:[];
-limits=saved.limits||limits;
-}
-}catch(e){records=[];}
-document.getElementById("min").value=limits.min;
-document.getElementById("max").value=limits.max;
+function authMessage(t){
+ document.getElementById("authMessage").textContent=t;
 }
 
-function saveData(){
-localStorage.setItem(STORAGE_KEY,JSON.stringify({records,limits}));
+function showApp(){
+ document.getElementById("authCard").classList.add("hidden");
+ document.getElementById("app").classList.remove("hidden");
+ document.getElementById("userEmail").textContent=user.email;
 }
 
-function getTodayRecord(){
-return records.find(x=>x.date===today());
+async function signup(){
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+ if(!email||password.length<6){
+  authMessage("Nhập email hợp lệ và mật khẩu ít nhất 6 ký tự.");
+  return;
+ }
+ const {data,error}=await db.auth.signUp({email,password});
+ if(error){authMessage(error.message);return;}
+ if(data.session){
+  user=data.user;
+  await startApp();
+ }else{
+  authMessage("Đăng ký thành công! Hãy kiểm tra email để xác nhận tài khoản.");
+ }
+}
+
+async function login(){
+ const email=document.getElementById("email").value.trim();
+ const password=document.getElementById("password").value;
+ const {data,error}=await db.auth.signInWithPassword({email,password});
+ if(error){authMessage(error.message);return;}
+ user=data.user;
+ await startApp();
+}
+
+async function logout(){
+ clearTimeout(timer);
+ await db.auth.signOut();
+ user=null;
+ records=[];
+ document.getElementById("app").classList.add("hidden");
+ document.getElementById("authCard").classList.remove("hidden");
+ document.getElementById("result").textContent="?";
+ authMessage("Bạn đã đăng xuất.");
+}
+
+async function startApp(){
+ showApp();
+ loadLimits();
+ await loadRecords();
+ scheduleAutoDraw();
+}
+
+async function loadRecords(){
+ const {data,error}=await db
+  .from("daily_draws")
+  .select("*")
+  .eq("user_id",user.id)
+  .order("draw_date",{ascending:false});
+
+ if(error){
+  alert("Không tải được lịch sử: "+error.message);
+  return;
+ }
+ records=data||[];
+ render();
+}
+
+function loadLimits(){
+ try{
+  const saved=JSON.parse(localStorage.getItem("drp_limits_"+user.id));
+  if(saved)limits=saved;
+ }catch(e){}
+ document.getElementById("min").value=limits.min;
+ document.getElementById("max").value=limits.max;
 }
 
 function saveLimits(){
-const min=Number(document.getElementById("min").value);
-const max=Number(document.getElementById("max").value);
-if(!Number.isInteger(min)||!Number.isInteger(max)||min>max){
-alert("Hãy nhập hai số nguyên hợp lệ.");
-return;
-}
-limits={min,max};
-saveData();
-alert("Đã lưu giới hạn!");
+ const min=Number(document.getElementById("min").value);
+ const max=Number(document.getElementById("max").value);
+ if(!Number.isInteger(min)||!Number.isInteger(max)||min>max){
+  alert("Giới hạn không hợp lệ.");
+  return;
+ }
+ limits={min,max};
+ localStorage.setItem("drp_limits_"+user.id,JSON.stringify(limits));
+ alert("Đã lưu giới hạn!");
 }
 
-function draw(type){
-if(getTodayRecord()){
-render();
-return;
+function getTodayRecord(){
+ return records.find(x=>x.draw_date===today());
 }
-const min=Number(limits.min);
-const max=Number(limits.max);
-if(!Number.isInteger(min)||!Number.isInteger(max)||min>max){
-alert("Giới hạn không hợp lệ.");
-return;
+
+async function draw(type){
+ if(!user||busy)return;
+ if(getTodayRecord()){
+  render();
+  return;
+ }
+
+ const min=Number(limits.min);
+ const max=Number(limits.max);
+ if(!Number.isInteger(min)||!Number.isInteger(max)||min>max){
+  alert("Hãy kiểm tra giới hạn quay.");
+  return;
+ }
+
+ busy=true;
+ document.getElementById("drawBtn").disabled=true;
+
+ const value=Math.floor(Math.random()*(max-min+1))+min;
+
+ const {data,error}=await db.from("daily_draws").insert({
+  user_id:user.id,
+  draw_date:today(),
+  value:value,
+  draw_type:type
+ }).select().single();
+
+ busy=false;
+
+ if(error){
+  await loadRecords();
+  if(getTodayRecord())return;
+  document.getElementById("drawBtn").disabled=false;
+  alert("Không lưu được kết quả: "+error.message);
+  return;
+ }
+
+ records.unshift(data);
+ render();
+ clearTimeout(timer);
 }
-const value=Math.floor(Math.random()*(max-min+1))+min;
-records.push({
-date:today(),
-value:value,
-type:type,
-time:new Date().toLocaleTimeString("vi-VN")
-});
-saveData();
-render();
+
+function scheduleAutoDraw(){
+ clearTimeout(timer);
+ if(getTodayRecord())return;
+
+ document.getElementById("status").textContent=
+  "Tự động quay sau 5 phút nếu bạn chưa quay.";
+
+ timer=setTimeout(()=>{
+  if(user&&!getTodayRecord())draw("auto");
+ },300000);
 }
 
 function render(){
-const record=getTodayRecord();
-const btn=document.getElementById("drawBtn");
+ const record=getTodayRecord();
+ const btn=document.getElementById("drawBtn");
 
-if(record){
-document.getElementById("result").textContent=record.value;
-document.getElementById("status").textContent="Đã quay hôm nay lúc "+record.time;
-btn.disabled=true;
-btn.textContent="ĐÃ QUAY HÔM NAY";
-}else{
-document.getElementById("result").textContent="?";
-document.getElementById("status").textContent="Chưa quay. Tự động quay sau 5 phút.";
-btn.disabled=false;
-btn.textContent="🎯 QUAY NGAY";
-}
+ if(record){
+  document.getElementById("result").textContent=record.value;
+  document.getElementById("status").textContent="Đã quay hôm nay.";
+  btn.disabled=true;
+  btn.textContent="ĐÃ QUAY HÔM NAY";
+ }else{
+  document.getElementById("result").textContent="?";
+  document.getElementById("status").textContent="Tự động quay sau 5 phút nếu chưa quay.";
+  btn.disabled=false;
+  btn.textContent="🎯 QUAY NGAY";
+ }
 
-const values=records.map(x=>x.value);
-const total=values.reduce((s,n)=>s+n,0);
-document.getElementById("count").textContent=records.length;
-document.getElementById("total").textContent=total;
-document.getElementById("average").textContent=values.length?(total/values.length).toFixed(2):0;
-document.getElementById("highest").textContent=values.length?Math.max(...values):"—";
+ const values=records.map(x=>Number(x.value));
+ const total=values.reduce((s,n)=>s+n,0);
 
-const sorted=[...records].sort((a,b)=>b.date.localeCompare(a.date));
-document.getElementById("history").innerHTML=sorted.length?
-`<table><thead><tr><th>Ngày</th><th>Kết quả</th><th>Hình thức</th></tr></thead><tbody>
-${sorted.map(x=>`<tr><td>${x.date}</td><td><strong>${x.value}</strong></td><td>${x.type==="auto"?"Tự động":"Chủ động"}</td></tr>`).join("")}
-</tbody></table>`:
-'<div class="empty">Chưa có lịch sử quay.</div>';
+ document.getElementById("count").textContent=records.length;
+ document.getElementById("total").textContent=total;
+ document.getElementById("average").textContent=
+  values.length?(total/values.length).toFixed(2):0;
+ document.getElementById("highest").textContent=
+  values.length?Math.max(...values):"—";
+
+ const sorted=[...records].sort((a,b)=>b.draw_date.localeCompare(a.draw_date));
+
+ document.getElementById("history").innerHTML=sorted.length?
+ `<table><thead><tr><th>Ngày</th><th>Kết quả</th><th>Hình thức</th></tr></thead>
+ <tbody>${sorted.map(x=>`<tr>
+ <td>${x.draw_date}</td><td><strong>${x.value}</strong></td>
+ <td>${x.draw_type==="auto"?"Tự động":"Chủ động"}</td>
+ </tr>`).join("")}</tbody></table>`:
+ '<p class="message">Chưa có lịch sử quay.</p>';
 }
 
 function exportCSV(){
-if(!records.length){alert("Chưa có dữ liệu.");return;}
-const rows=[["Ngày","Kết quả","Hình thức","Thời gian"],
-...records.map(x=>[x.date,x.value,x.type==="auto"?"Tự động":"Chủ động",x.time])];
-const csv="\uFEFF"+rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(",")).join("\n");
-const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
-const url=URL.createObjectURL(blob);
-const a=document.createElement("a");
-a.href=url;
-a.download="lich-su-quay.csv";
-a.click();
-URL.revokeObjectURL(url);
+ if(!records.length){alert("Chưa có dữ liệu.");return;}
+ const rows=[["Ngày","Kết quả","Hình thức"],
+ ...records.map(x=>[x.draw_date,x.value,x.draw_type==="auto"?"Tự động":"Chủ động"])];
+ const csv="\uFEFF"+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\n");
+ const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
+ const url=URL.createObjectURL(blob);
+ const a=document.createElement("a");
+ a.href=url;
+ a.download="daily-random-history.csv";
+ a.click();
+ URL.revokeObjectURL(url);
 }
 
-loadData();
-render();
-
-setTimeout(()=>{
-if(!getTodayRecord()){
-draw("auto");
+async function init(){
+ const {data}=await db.auth.getSession();
+ if(data.session){
+  user=data.session.user;
+  await startApp();
+ }
 }
-},300000);
+
+db.auth.onAuthStateChange((event,session)=>{
+ if(event==="SIGNED_OUT"){
+  clearTimeout(timer);
+  user=null;
+  records=[];
+  document.getElementById("app").classList.add("hidden");
+  document.getElementById("authCard").classList.remove("hidden");
+ }
+});
+
+init();
 </script>
 </body>
 </html>
-
