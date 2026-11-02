@@ -1,330 +1,588 @@
-
 <!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#101827">
 <title>Daily Random Pro</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-*{box-sizing:border-box}
-body{margin:0;padding:18px;font-family:Arial;background:linear-gradient(135deg,#172554,#4338ca);color:white;min-height:100vh}
-.container{max-width:500px;margin:auto}
-h1{text-align:center}
-.subtitle{text-align:center;color:#c7d2fe;margin-bottom:22px}
-.card{background:white;color:#1e293b;padding:18px;border-radius:16px;margin-bottom:15px}
-input{width:100%;padding:13px;margin:7px 0 13px;border:1px solid #cbd5e1;border-radius:9px;font-size:16px}
-label{font-weight:bold}
-button{width:100%;padding:13px;border:0;border-radius:10px;font-size:16px;font-weight:bold;margin-top:8px;background:#4f46e5;color:white}
-button.secondary{background:#e0e7ff;color:#3730a3}
-button:disabled{opacity:.5}
-.result{text-align:center;font-size:65px;font-weight:bold;color:#4f46e5;padding:20px}
-.inputs{display:flex;gap:10px}
-.inputs div{flex:1;min-width:0}
-.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.stat{background:#eef2ff;padding:13px;border-radius:10px;text-align:center}
-.stat strong{display:block;font-size:23px;color:#4338ca;margin-top:5px}
-.status{text-align:center;color:#64748b;font-size:13px;margin-top:12px}
-.history{max-height:260px;overflow:auto}
-table{width:100%;border-collapse:collapse;font-size:13px}
-td,th{padding:10px 4px;text-align:center;border-bottom:1px solid #ddd}
-.message{font-size:14px;color:#475569;line-height:1.5;overflow-wrap:anywhere}
-.hidden{display:none}
-.footer{text-align:center;font-size:12px;color:#c7d2fe;margin:20px}
+:root {
+  color-scheme: dark;
+  --bg: #0b1220;
+  --panel: #121d2e;
+  --line: #26364d;
+  --text: #eef4ff;
+  --muted: #9aabc2;
+  --accent: #65d6ad;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: radial-gradient(circle at 50% -10%,#1b3550 0,#0b1220 52%);
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color: var(--text);
+  min-height: 100vh;
+  padding: 22px 14px 40px;
+}
+main { max-width: 760px; margin: auto; }
+.top { text-align: center; margin: 10px 0 22px; }
+.logo {
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 15px;
+  background: linear-gradient(135deg,#65d6ad,#47b9e8);
+  color: #07131d;
+  font-size: 25px;
+  font-weight: 900;
+}
+.top h1 { font-size: 27px; margin: 12px 0 5px; }
+.top p { margin: 0; color: var(--muted); font-size: 14px; }
+.card {
+  background: linear-gradient(160deg,rgba(23,36,56,.97),rgba(16,27,43,.97));
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 19px;
+  margin: 13px 0;
+}
+.card h2 { font-size: 17px; margin: 0 0 15px; }
+.draw { text-align: center; padding: 24px 18px; }
+.eyebrow {
+  font-size: 12px;
+  letter-spacing: 1.5px;
+  color: var(--muted);
+}
+.number {
+  font-size: clamp(76px,20vw,118px);
+  font-weight: 850;
+  line-height: 1.12;
+  margin: 10px 0;
+  color: var(--accent);
+  min-height: 120px;
+}
+.status { font-size: 13px; color: var(--muted); margin: 8px 0 17px; }
+button {
+  border: 0;
+  border-radius: 13px;
+  padding: 13px 17px;
+  font-weight: 750;
+  font-size: 15px;
+  cursor: pointer;
+  color: #07151c;
+  background: linear-gradient(110deg,var(--accent),#83e6d0);
+  width: 100%;
+  min-height: 46px;
+}
+button:disabled { opacity: .42; }
+button.secondary {
+  background: #172438;
+  border: 1px solid var(--line);
+  color: var(--text);
+}
+button.danger {
+  background: #3a2029;
+  color: #ffd5d5;
+}
+.fields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+label {
+  display: block;
+  font-size: 13px;
+  color: var(--muted);
+  margin-bottom: 7px;
+}
+input {
+  width: 100%;
+  background: #0c1726;
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  color: var(--text);
+  padding: 12px;
+  font-size: 16px;
+}
+.hint {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 12px 0 0;
+}
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 9px;
+}
+.stat {
+  background: #0d1929;
+  border: 1px solid var(--line);
+  border-radius: 13px;
+  padding: 13px 9px;
+  text-align: center;
+}
+.stat strong { display: block; font-size: 22px; margin-bottom: 4px; }
+.stat span { font-size: 11px; color: var(--muted); }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th,td {
+  text-align: left;
+  padding: 11px 7px;
+  border-bottom: 1px solid var(--line);
+}
+th { color: var(--muted); }
+td:last-child,th:last-child { text-align: right; }
+.empty { text-align: center; color: var(--muted); padding: 22px 5px; }
+.actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.file-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #172438;
+  border: 1px solid var(--line);
+  color: var(--text);
+  border-radius: 13px;
+  min-height: 46px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 10px;
+  text-align: center;
+}
+input[type=file] { display: none; }
+footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 11px;
+  margin: 20px 0;
+}
 </style>
 </head>
+
 <body>
-<div class="container">
-<h1>🎲 Daily Random Pro</h1>
-<div class="subtitle">Mỗi ngày một con số ngẫu nhiên</div>
+<main>
 
-<div class="card" id="authCard">
-<h3>🔐 Tài khoản</h3>
-<label>Email</label>
-<input id="email" type="email" placeholder="Nhập email">
-<label>Mật khẩu</label>
-<input id="password" type="password" placeholder="Nhập mật khẩu">
-<button onclick="signup()">Đăng ký</button>
-<button class="secondary" onclick="login()">Đăng nhập</button>
-<p class="message" id="authMessage"></p>
-</div>
+<header class="top">
+  <div class="logo">R</div>
+  <h1>Daily Random Pro</h1>
+  <p>Mỗi ngày một con số – tự động lưu lịch sử trên thiết bị</p>
+</header>
 
-<div id="app" class="hidden">
-<div class="card">
-<div class="message">Tài khoản: <strong id="userEmail"></strong></div>
-<button class="secondary" onclick="logout()">Đăng xuất</button>
-</div>
+<section class="card draw">
+  <div class="eyebrow" id="dateLabel">KẾT QUẢ HÔM NAY</div>
+  <div class="number" id="result">—</div>
+  <div class="status" id="status">Chưa quay hôm nay</div>
+  <button id="drawBtn">QUAY NGAY</button>
+  <p class="hint" id="timerText">
+    Nếu chưa quay, ứng dụng sẽ tự quay sau 5 phút khi trang được mở.
+  </p>
+</section>
 
-<div class="card">
-<h3>⚙️ Giới hạn quay</h3>
-<div class="inputs">
-<div><label>Giới hạn dưới</label><input id="min" type="number" value="30"></div>
-<div><label>Giới hạn trên</label><input id="max" type="number" value="100"></div>
-</div>
-<button class="secondary" onclick="saveLimits()">Lưu giới hạn</button>
-</div>
+<section class="card">
+  <h2>⚙️ Cài đặt khoảng số</h2>
+  <div class="fields">
+    <div>
+      <label for="minValue">Giới hạn dưới</label>
+      <input id="minValue" type="number" value="30" step="1">
+    </div>
+    <div>
+      <label for="maxValue">Giới hạn trên</label>
+      <input id="maxValue" type="number" value="100" step="1">
+    </div>
+  </div>
+  <p class="hint">
+    Thay đổi giới hạn sẽ áp dụng cho lần quay tiếp theo.
+    Kết quả đã lưu không bị thay đổi.
+  </p>
+</section>
 
-<div class="card">
-<h3 style="text-align:center">KẾT QUẢ HÔM NAY</h3>
-<div class="result" id="result">?</div>
-<button id="drawBtn" onclick="draw('manual')">🎯 QUAY NGAY</button>
-<div class="status" id="status">Tự động quay sau 5 phút nếu chưa quay.</div>
-</div>
+<section class="card">
+  <h2>📊 Thống kê</h2>
+  <div class="stats">
+    <div class="stat">
+      <strong id="totalCount">0</strong>
+      <span>Số ngày đã quay</span>
+    </div>
+    <div class="stat">
+      <strong id="sumValue">0</strong>
+      <span>Tổng</span>
+    </div>
+    <div class="stat">
+      <strong id="avgValue">0</strong>
+      <span>Trung bình</span>
+    </div>
+  </div>
+</section>
 
-<div class="card">
-<h3>📊 Thống kê</h3>
-<div class="stats">
-<div class="stat">Số lần quay<strong id="count">0</strong></div>
-<div class="stat">Tổng điểm<strong id="total">0</strong></div>
-<div class="stat">Trung bình<strong id="average">0</strong></div>
-<div class="stat">Cao nhất<strong id="highest">—</strong></div>
-</div>
-</div>
+<section class="card">
+  <h2>📅 Lịch sử quay</h2>
+  <div id="historyWrap">
+    <div class="empty">Chưa có dữ liệu. Hãy quay số đầu tiên!</div>
+  </div>
+</section>
 
-<div class="card">
-<h3>📅 Lịch sử quay</h3>
-<div class="history" id="history"></div>
-<button class="secondary" onclick="exportCSV()">⬇️ Xuất CSV</button>
-</div>
-</div>
+<section class="card">
+  <h2>💾 Sao lưu và khôi phục</h2>
+  <div class="actions">
+    <button class="secondary" id="exportBtn">Xuất bản sao lưu</button>
+    <label class="file-label" for="importFile">Nhập bản sao lưu</label>
+    <input id="importFile" type="file" accept=".json,application/json">
+  </div>
+  <p class="hint">
+    Hãy xuất file sao lưu định kỳ và cất ở nơi an toàn.
+    Khi đổi điện thoại hoặc trình duyệt, dùng chức năng Nhập
+    bản sao lưu để khôi phục.
+  </p>
+</section>
 
-<div class="footer">Daily Random Pro © 2026</div>
-</div>
+<section class="card">
+  <button class="danger" id="resetBtn">
+    Xóa toàn bộ dữ liệu trên thiết bị
+  </button>
+  <p class="hint">
+    Thao tác này xóa lịch sử và cài đặt đã lưu trên trình duyệt hiện tại.
+  </p>
+</section>
+
+<footer>
+  Dữ liệu lưu trên trình duyệt này · Không cần tài khoản
+</footer>
+
+</main>
 
 <script>
-const SUPABASE_URL="https://uclfntxylbopdiuoszgf.supabase.co";
-const SUPABASE_KEY="sb_publishable_s2i7rQQH57bx1JaauGX8iQ_n-X__uyj";
+(() => {
+  "use strict";
 
-const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+  const KEY = "dailyRandomPro_local_v1";
+  const $ = id => document.getElementById(id);
 
-let user=null;
-let records=[];
-let limits={min:30,max:100};
-let timer=null;
-let busy=false;
+  const today = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+  };
 
-function today(){
- const d=new Date();
- return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
-}
+  const dateText = iso => {
+    const [y,m,d] = iso.split("-");
+    return `${d}/${m}/${y}`;
+  };
 
-function authMessage(t){
- document.getElementById("authMessage").textContent=t;
-}
+  const defaultData = () => ({
+    version: 1,
+    min: 30,
+    max: 100,
+    records: [],
+    timers: {}
+  });
 
-function showApp(){
- document.getElementById("authCard").classList.add("hidden");
- document.getElementById("app").classList.remove("hidden");
- document.getElementById("userEmail").textContent=user.email;
-}
+  let data = load();
 
-async function signup(){
- const email=document.getElementById("email").value.trim();
- const password=document.getElementById("password").value;
- if(!email||password.length<6){
-  authMessage("Nhập email hợp lệ và mật khẩu ít nhất 6 ký tự.");
-  return;
- }
- const {data,error}=await db.auth.signUp({email,password});
- if(error){authMessage(error.message);return;}
- if(data.session){
-  user=data.user;
-  await startApp();
- }else{
-  authMessage("Đăng ký thành công! Hãy kiểm tra email để xác nhận tài khoản.");
- }
-}
+  function load() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return defaultData();
 
-async function login(){
- const email=document.getElementById("email").value.trim();
- const password=document.getElementById("password").value;
- const {data,error}=await db.auth.signInWithPassword({email,password});
- if(error){authMessage(error.message);return;}
- user=data.user;
- await startApp();
-}
+      const parsed = JSON.parse(raw);
 
-async function logout(){
- clearTimeout(timer);
- await db.auth.signOut();
- user=null;
- records=[];
- document.getElementById("app").classList.add("hidden");
- document.getElementById("authCard").classList.remove("hidden");
- document.getElementById("result").textContent="?";
- authMessage("Bạn đã đăng xuất.");
-}
+      if (!parsed || !Array.isArray(parsed.records)) {
+        return defaultData();
+      }
 
-async function startApp(){
- showApp();
- loadLimits();
- await loadRecords();
- scheduleAutoDraw();
-}
+      return {
+        ...defaultData(),
+        ...parsed,
+        timers: parsed.timers || {}
+      };
+    } catch {
+      return defaultData();
+    }
+  }
 
-async function loadRecords(){
- const {data,error}=await db
-  .from("daily_draws")
-  .select("*")
-  .eq("user_id",user.id)
-  .order("draw_date",{ascending:false});
+  function save() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(data));
+    } catch {
+      alert("Không thể lưu dữ liệu. Bộ nhớ trình duyệt có thể đã đầy.");
+    }
+  }
 
- if(error){
-  alert("Không tải được lịch sử: "+error.message);
-  return;
- }
- records=data||[];
- render();
-}
+  function recordForDay(day = today()) {
+    return data.records.find(r => r.date === day);
+  }
 
-function loadLimits(){
- try{
-  const saved=JSON.parse(localStorage.getItem("drp_limits_"+user.id));
-  if(saved)limits=saved;
- }catch(e){}
- document.getElementById("min").value=limits.min;
- document.getElementById("max").value=limits.max;
-}
+  function validBounds() {
+    const min = Number($("minValue").value);
+    const max = Number($("maxValue").value);
 
-function saveLimits(){
- const min=Number(document.getElementById("min").value);
- const max=Number(document.getElementById("max").value);
- if(!Number.isInteger(min)||!Number.isInteger(max)||min>max){
-  alert("Giới hạn không hợp lệ.");
-  return;
- }
- limits={min,max};
- localStorage.setItem("drp_limits_"+user.id,JSON.stringify(limits));
- alert("Đã lưu giới hạn!");
-}
+    if (!Number.isSafeInteger(min) ||
+        !Number.isSafeInteger(max) ||
+        min > max) {
+      alert("Hãy nhập hai số nguyên hợp lệ; giới hạn dưới không được lớn hơn giới hạn trên.");
+      return null;
+    }
 
-function getTodayRecord(){
- return records.find(x=>x.draw_date===today());
-}
+    return { min, max };
+  }
 
-async function draw(type){
- if(!user||busy)return;
- if(getTodayRecord()){
+  function draw(type) {
+    if (recordForDay()) {
+      render();
+      return;
+    }
+
+    const bounds = validBounds();
+    if (!bounds) return;
+
+    data.min = bounds.min;
+    data.max = bounds.max;
+
+    const span = bounds.max - bounds.min + 1;
+    const value = bounds.min + Math.floor(Math.random() * span);
+
+    const rec = {
+      date: today(),
+      value,
+      type,
+      createdAt: new Date().toISOString(),
+      min: bounds.min,
+      max: bounds.max
+    };
+
+    data.records.push(rec);
+    data.records.sort((a,b) => a.date.localeCompare(b.date));
+
+    save();
+    render();
+  }
+
+  function ensureTimer() {
+    const day = today();
+
+    if (recordForDay(day)) return;
+
+    if (!Number.isFinite(data.timers[day])) {
+      data.timers[day] = Date.now() + 5 * 60 * 1000;
+      save();
+    }
+
+    const remaining = data.timers[day] - Date.now();
+
+    if (remaining <= 0) {
+      draw("auto");
+      return;
+    }
+
+    updateTimer();
+
+    setTimeout(() => {
+      if (!recordForDay(day) && today() === day) {
+        draw("auto");
+      }
+    }, remaining);
+  }
+
+  function updateTimer() {
+    if (recordForDay()) {
+      $("timerText").textContent = "Hôm nay đã hoàn tất lượt quay.";
+      return;
+    }
+
+    const left = Math.max(
+      0,
+      (data.timers[today()] || Date.now()) - Date.now()
+    );
+
+    const mins = Math.floor(left / 60000);
+    const secs = Math.floor((left % 60000) / 1000);
+
+    $("timerText").textContent =
+      `Tự động quay sau ${mins}:${String(secs).padStart(2,"0")} nếu bạn chưa quay thủ công.`;
+  }
+
+  function render() {
+    $("minValue").value = data.min;
+    $("maxValue").value = data.max;
+
+    const rec = recordForDay();
+
+    $("dateLabel").textContent =
+      `KẾT QUẢ HÔM NAY · ${dateText(today())}`;
+
+    $("result").textContent = rec ? rec.value : "—";
+
+    $("status").textContent = rec
+      ? (rec.type === "auto"
+          ? "Đã tự động quay hôm nay"
+          : "Bạn đã quay thủ công hôm nay")
+      : "Chưa quay hôm nay";
+
+    $("drawBtn").disabled = !!rec;
+    $("drawBtn").textContent = rec
+      ? "ĐÃ QUAY HÔM NAY"
+      : "QUAY NGAY";
+
+    const records = [...data.records]
+      .sort((a,b) => b.date.localeCompare(a.date));
+
+    const sum = records.reduce(
+      (s,r) => s + Number(r.value), 0
+    );
+
+    $("totalCount").textContent = records.length;
+    $("sumValue").textContent = sum;
+    $("avgValue").textContent = records.length
+      ? (sum / records.length).toFixed(2)
+      : "0";
+
+    if (!records.length) {
+      $("historyWrap").innerHTML =
+        '<div class="empty">Chưa có dữ liệu. Hãy quay số đầu tiên!</div>';
+    } else {
+      const rows = records.map(r => `
+        <tr>
+          <td>${dateText(r.date)}</td>
+          <td>${r.value}</td>
+          <td>${r.type === "auto" ? "Tự động" : "Thủ công"}</td>
+        </tr>
+      `).join("");
+
+      $("historyWrap").innerHTML = `
+        <div style="overflow-x:auto">
+          <table>
+            <thead>
+              <tr>
+                <th>Ngày</th>
+                <th>Kết quả</th>
+                <th>Kiểu quay</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>
+      `;
+    }
+
+    if (rec) {
+      $("timerText").textContent = "Hôm nay đã hoàn tất lượt quay.";
+    } else {
+      updateTimer();
+    }
+  }
+
+  $("drawBtn").addEventListener("click", () => draw("manual"));
+
+  $("minValue").addEventListener("change", () => {
+    const b = validBounds();
+    if (b) {
+      data.min = b.min;
+      data.max = b.max;
+      save();
+    }
+  });
+
+  $("maxValue").addEventListener("change", () => {
+    const b = validBounds();
+    if (b) {
+      data.min = b.min;
+      data.max = b.max;
+      save();
+    }
+  });
+
+  // Xuất bản sao lưu
+  $("exportBtn").addEventListener("click", () => {
+    const blob = new Blob(
+      [JSON.stringify(data, null, 2)],
+      { type: "application/json" }
+    );
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+
+    a.href = url;
+    a.download = `daily-random-pro-backup-${today()}.json`;
+
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    URL.revokeObjectURL(url);
+  });
+
+  // Nhập và khôi phục dữ liệu
+  $("importFile").addEventListener("change", async e => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    try {
+      const imported = JSON.parse(await file.text());
+
+      if (
+        !imported ||
+        !Array.isArray(imported.records) ||
+        !imported.records.every(r =>
+          typeof r.date === "string" &&
+          Number.isFinite(Number(r.value))
+        )
+      ) {
+        throw new Error("Tệp không đúng định dạng Daily Random Pro.");
+      }
+
+      if (!confirm(
+        `Tệp có ${imported.records.length} kết quả. Nhập sẽ thay thế dữ liệu hiện tại. Bạn có muốn tiếp tục?`
+      )) return;
+
+      data = {
+        ...defaultData(),
+        ...imported,
+        timers: imported.timers || {}
+      };
+
+      save();
+      render();
+      ensureTimer();
+
+      alert("Đã khôi phục dữ liệu thành công.");
+
+    } catch (err) {
+      alert(err.message || "Không đọc được tệp sao lưu.");
+    } finally {
+      e.target.value = "";
+    }
+  });
+
+  // Xóa dữ liệu
+  $("resetBtn").addEventListener("click", () => {
+    if (!confirm(
+      "Bạn chắc chắn muốn xóa toàn bộ lịch sử và cài đặt trên thiết bị này?"
+    )) return;
+
+    data = defaultData();
+    save();
+    render();
+    ensureTimer();
+  });
+
   render();
-  return;
- }
+  ensureTimer();
 
- const min=Number(limits.min);
- const max=Number(limits.max);
- if(!Number.isInteger(min)||!Number.isInteger(max)||min>max){
-  alert("Hãy kiểm tra giới hạn quay.");
-  return;
- }
+  setInterval(updateTimer, 1000);
 
- busy=true;
- document.getElementById("drawBtn").disabled=true;
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+      if (!recordForDay() && data.timers[today()] <= Date.now()) {
+        draw("auto");
+      } else {
+        ensureTimer();
+      }
+    }
+  });
 
- const value=Math.floor(Math.random()*(max-min+1))+min;
-
- const {data,error}=await db.from("daily_draws").insert({
-  user_id:user.id,
-  draw_date:today(),
-  value:value,
-  draw_type:type
- }).select().single();
-
- busy=false;
-
- if(error){
-  await loadRecords();
-  if(getTodayRecord())return;
-  document.getElementById("drawBtn").disabled=false;
-  alert("Không lưu được kết quả: "+error.message);
-  return;
- }
-
- records.unshift(data);
- render();
- clearTimeout(timer);
-}
-
-function scheduleAutoDraw(){
- clearTimeout(timer);
- if(getTodayRecord())return;
-
- document.getElementById("status").textContent=
-  "Tự động quay sau 5 phút nếu bạn chưa quay.";
-
- timer=setTimeout(()=>{
-  if(user&&!getTodayRecord())draw("auto");
- },300000);
-}
-
-function render(){
- const record=getTodayRecord();
- const btn=document.getElementById("drawBtn");
-
- if(record){
-  document.getElementById("result").textContent=record.value;
-  document.getElementById("status").textContent="Đã quay hôm nay.";
-  btn.disabled=true;
-  btn.textContent="ĐÃ QUAY HÔM NAY";
- }else{
-  document.getElementById("result").textContent="?";
-  document.getElementById("status").textContent="Tự động quay sau 5 phút nếu chưa quay.";
-  btn.disabled=false;
-  btn.textContent="🎯 QUAY NGAY";
- }
-
- const values=records.map(x=>Number(x.value));
- const total=values.reduce((s,n)=>s+n,0);
-
- document.getElementById("count").textContent=records.length;
- document.getElementById("total").textContent=total;
- document.getElementById("average").textContent=
-  values.length?(total/values.length).toFixed(2):0;
- document.getElementById("highest").textContent=
-  values.length?Math.max(...values):"—";
-
- const sorted=[...records].sort((a,b)=>b.draw_date.localeCompare(a.draw_date));
-
- document.getElementById("history").innerHTML=sorted.length?
- `<table><thead><tr><th>Ngày</th><th>Kết quả</th><th>Hình thức</th></tr></thead>
- <tbody>${sorted.map(x=>`<tr>
- <td>${x.draw_date}</td><td><strong>${x.value}</strong></td>
- <td>${x.draw_type==="auto"?"Tự động":"Chủ động"}</td>
- </tr>`).join("")}</tbody></table>`:
- '<p class="message">Chưa có lịch sử quay.</p>';
-}
-
-function exportCSV(){
- if(!records.length){alert("Chưa có dữ liệu.");return;}
- const rows=[["Ngày","Kết quả","Hình thức"],
- ...records.map(x=>[x.draw_date,x.value,x.draw_type==="auto"?"Tự động":"Chủ động"])];
- const csv="\uFEFF"+rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(",")).join("\n");
- const blob=new Blob([csv],{type:"text/csv;charset=utf-8"});
- const url=URL.createObjectURL(blob);
- const a=document.createElement("a");
- a.href=url;
- a.download="daily-random-history.csv";
- a.click();
- URL.revokeObjectURL(url);
-}
-
-async function init(){
- const {data}=await db.auth.getSession();
- if(data.session){
-  user=data.session.user;
-  await startApp();
- }
-}
-
-db.auth.onAuthStateChange((event,session)=>{
- if(event==="SIGNED_OUT"){
-  clearTimeout(timer);
-  user=null;
-  records=[];
-  document.getElementById("app").classList.add("hidden");
-  document.getElementById("authCard").classList.remove("hidden");
- }
-});
-
-init();
+})();
 </script>
 </body>
 </html>
